@@ -92,9 +92,12 @@ def get_resonance_freq():
 ''' Finds A via intergation '''
 def get_A(freq_list, pds, SNR):
     integral = 0
+    k = 0
     for f, s_h in zip(freq_list, pds):
-        integral += (f)**(-7 / 6) / s_h
-    return SNR / np.sqrt(abs(integral))
+        if k < (len(freq_list)-1):
+            integral += ((f)**(-7 / 6) / s_h)*(freq_list[k+1]-f)
+            k += 1
+    return np.sqrt(SNR / 4*abs(integral))
 
 
 ''' Calculates h(f)'''
@@ -217,11 +220,14 @@ def create_fisher_matrix(A, freq_list, pds, function_index):
         fisher_matrix.append([])
         for j in range(len(params)):
             integral = 0
+            k = 0
             for f, sh in zip(freq_list, pds):
-                integral += np.real(get_h_f_derivative(A, f, i, function_index)
-                                    * get_h_f_derivative(A, f, j, function_index) / sh)
-            # print(integral)
-            fisher_matrix[-1].append(integral)
+                if k < (len(freq_list)-1):
+                    integral += np.real(get_h_f_derivative(A, f, i, function_index)
+                                        * np.conj(get_h_f_derivative(A, f, j, function_index)) / sh)*(freq_list[k+1]-f)
+                    k += 1
+                # print(integral)
+            fisher_matrix[-1].append(4*integral)
     return(fisher_matrix)
 '''This function can plot both the PDS of initial and advanced LIGO'''
 def graph_s_h(telescope):
